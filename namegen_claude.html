@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nama Generator — Kamus Kata</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0ede8;
+    --glass-bg: rgba(255,255,255,0.45);
+    --glass-border: rgba(255,255,255,0.7);
+    --glass-shadow: 0 8px 32px rgba(120,100,80,0.12), 0 2px 8px rgba(120,100,80,0.08);
+    --card-bg: rgba(255,255,255,0.6);
+    --text-primary: #1a1512;
+    --text-secondary: #6b5e52;
+    --text-muted: #a89880;
+    --accent: #7c6151;
+    --accent-light: #c4a882;
+    --accent-soft: rgba(124,97,81,0.12);
+    --pink-soft: rgba(220,176,150,0.3);
+    --blue-soft: rgba(180,200,220,0.3);
+    --lavender: rgba(200,190,220,0.3);
+    --orb1: rgba(212,180,145,0.5);
+    --orb2: rgba(190,200,215,0.4);
+    --orb3: rgba(220,200,180,0.35);
+    --track: rgba(0,0,0,0.12);
+    --thumb: rgba(124,97,81,0.7);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    color: var(--text-primary);
+  }
+
+  /* Ambient background blobs */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    animation: drift linear infinite alternate;
+  }
+  .orb-1 { width: 600px; height: 500px; background: var(--orb1); top: -150px; left: -100px; animation-duration: 18s; }
+  .orb-2 { width: 500px; height: 600px; background: var(--orb2); bottom: -200px; right: -80px; animation-duration: 22s; }
+  .orb-3 { width: 400px; height: 400px; background: var(--orb3); top: 40%; left: 35%; animation-duration: 15s; }
+  @keyframes drift { from { transform: translate(0,0) scale(1); } to { transform: translate(30px,20px) scale(1.05); } }
+
+  /* Layout */
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-light);
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(38px, 7vw, 64px);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+  .header h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .header p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  /* Glass panel */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: var(--glass-shadow);
+    padding: 36px 40px;
+    margin-bottom: 20px;
+  }
+
+  /* Controls */
+  .controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .control-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .control-label span {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--accent);
+    margin-left: 8px;
+  }
+
+  /* Slider */
+  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--track);
+    border-radius: 999px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(124,97,81,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 16px rgba(124,97,81,0.4);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    border: 2px solid var(--accent);
+    cursor: pointer;
+  }
+  .slider-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: center;
+  }
+  .slider-track-fill {
+    display: none;
+  }
+
+  /* Gender filter pills */
+  .pill-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    padding: 7px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(124,97,81,0.25);
+    background: rgba(255,255,255,0.4);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+    letter-spacing: 0.01em;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .pill.active {
+    background: rgba(124,97,81,0.85);
+    color: #f8f0e8;
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(124,97,81,0.3);
+  }
+
+  /* Count options */
+  .count-options { display: flex; gap: 8px; }
+  .count-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(124,97,81,0.2);
+    background: rgba(255,255,255,0.4);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .count-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .count-btn.active {
+    background: rgba(124,97,81,0.85);
+    color: #f8f0e8;
+    border-color: transparent;
+  }
+
+  /* Generate button */
+  .generate-wrap { text-align: center; }
+  .generate-btn {
+    padding: 16px 52px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, rgba(124,97,81,0.9) 0%, rgba(160,120,90,0.9) 100%);
+    color: #faf5ef;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 28px rgba(124,97,81,0.35), 0 2px 8px rgba(124,97,81,0.2);
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .generate-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+    border-radius: inherit;
+  }
+  .generate-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 14px 36px rgba(124,97,81,0.45), 0 4px 12px rgba(124,97,81,0.25);
+  }
+  .generate-btn:active { transform: scale(0.97); }
+
+  /* Results */
+  .results-section { margin-top: 20px; }
+  .results-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+  .results-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .results-count {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  .name-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 22px 24px 18px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    box-shadow: 0 4px 16px rgba(120,100,80,0.08);
+  }
+  .name-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+  }
+  .name-card:hover {
+    transform: translateY(-4px) scale(1.015);
+    box-shadow: 0 14px 36px rgba(120,100,80,0.15), 0 4px 12px rgba(120,100,80,0.1);
+    border-color: rgba(255,255,255,0.85);
+  }
+  .name-card:active { transform: scale(0.98); }
+  .name-card.copied::after {
+    content: 'Disalin!';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(124,97,81,0.85);
+    color: #faf5ef;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 17px;
+    animation: fadeOut 0.8s 0.4s forwards;
+  }
+  @keyframes fadeOut { to { opacity: 0; } }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .name-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+    word-break: break-word;
+  }
+  .name-parts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .name-part {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.05);
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .name-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gender-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .gender-L { background: rgba(180,210,230,0.4); color: #3a6280; }
+  .gender-P { background: rgba(230,190,210,0.4); color: #7a3a60; }
+  .gender-N { background: rgba(200,210,190,0.4); color: #4a6040; }
+
+  .copy-hint {
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .name-card:hover .copy-hint { opacity: 1; }
+
+  /* Website combo section */
+  .website-section {
+    margin-top: 24px;
+  }
+  .website-panel {
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 24px 28px;
+    display: none;
+  }
+  .website-panel.visible { display: block; }
+
+  .website-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+  .website-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .website-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.6);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .website-item:hover { background: rgba(255,255,255,0.7); border-color: rgba(124,97,81,0.2); }
+  .website-url {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--accent);
+    font-weight: 400;
+    word-break: break-all;
+    line-height: 1.3;
+  }
+  .website-ext {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.06);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 17px;
+  }
+
+  /* Divider */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 32px 0 24px;
+  }
+  .divider-line { flex: 1; height: 1px; background: rgba(124,97,81,0.15); }
+  .divider-text { font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Website toggle */
+  .website-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-switch {
+    width: 42px; height: 24px;
+    background: rgba(0,0,0,0.12);
+    border-radius: 999px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on { background: rgba(124,97,81,0.8); }
+  .toggle-switch.on::after { transform: translateX(18px); }
+  .toggle-label { font-size: 13px; color: var(--text-secondary); }
+
+  /* Footer note */
+  .footer-note {
+    text-align: center;
+    margin-top: 48px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+  .footer-note em { font-family: 'Playfair Display', serif; font-style: italic; color: var(--accent-light); }
+</style>
+</head>
+<body>
+
+<div class="ambient">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="page">
+
+  <header class="header">
+    <div class="header-eyebrow">Kamus Kata · 1.119 nama</div>
+    <h1>Temukan <em>nama</em><br>yang sempurna</h1>
+    <p>Generator kombinasi nama dari kosakata bahasa Indonesia dan internasional, dengan filter gender dan jumlah kata.</p>
+  </header>
+
+  <div class="glass">
+    <div class="controls-grid">
+      <!-- Word count slider -->
+      <div class="control-group">
+        <div class="control-label">Jumlah kata <span id="word-count-display">2</span></div>
+        <div class="slider-wrap">
+          <input type="range" id="word-count" min="1" max="4" value="2" step="1">
+          <div class="slider-val" id="slider-val">2</div>
+        </div>
+      </div>
+
+      <!-- Generate count -->
+      <div class="control-group">
+        <div class="control-label">Hasil</div>
+        <div class="count-options">
+          <button class="count-btn" data-count="5">5</button>
+          <button class="count-btn active" data-count="10">10</button>
+          <button class="count-btn" data-count="20">20</button>
+          <button class="count-btn" data-count="30">30</button>
+        </div>
+      </div>
+
+      <!-- Gender filter -->
+      <div class="control-group">
+        <div class="control-label">Gender</div>
+        <div class="pill-group">
+          <button class="pill active" data-gender="all">Semua</button>
+          <button class="pill" data-gender="L">Laki-laki</button>
+          <button class="pill" data-gender="P">Perempuan</button>
+          <button class="pill" data-gender="N">Netral</button>
+        </div>
+      </div>
+
+      <!-- Website toggle -->
+      <div class="control-group">
+        <div class="control-label">Saran domain</div>
+        <div class="website-toggle" id="website-toggle">
+          <div class="toggle-switch" id="toggle-switch"></div>
+          <span class="toggle-label">Tampilkan ide nama website</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="generate-wrap">
+      <button class="generate-btn" id="generate-btn">
+        ✦ &nbsp; Buat kombinasi nama
+      </button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="results-section" style="display:none">
+    <div class="results-header">
+      <span class="results-label">Nama tersedia</span>
+      <span class="results-count" id="results-count"></span>
+    </div>
+    <div class="results-grid" id="results-grid"></div>
+
+    <!-- Website suggestions -->
+    <div class="website-section" id="website-section">
+      <div class="section-divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">Ide nama domain</div>
+        <div class="divider-line"></div>
+      </div>
+      <div class="website-panel visible" id="website-panel">
+        <div class="website-label">Berdasarkan nama yang di-generate</div>
+        <div class="website-list" id="website-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    Klik kartu untuk menyalin nama · Data dari <em>Kamus Kata Alpha Gender</em> · 1.119 entri
+  </div>
+
+</div>
+
+<script>
+const DATABASE = [{"Kosakata_Dasar":"AAROUND","Gender":"L"},{"Kosakata_Dasar":"ABBAD","Gender":"L"},{"Kosakata_Dasar":"ABDUL","Gender":"L"},{"Kosakata_Dasar":"ABEL","Gender":"L"},{"Kosakata_Dasar":"ABHINAYA","Gender":"P"},{"Kosakata_Dasar":"ABHIVANDYA","Gender":"P"},{"Kosakata_Dasar":"ABIANU","Gender":"L"},{"Kosakata_Dasar":"ABIDZAR","Gender":"L"},{"Kosakata_Dasar":"ABINAYA","Gender":"P"},{"Kosakata_Dasar":"ABIOSO","Gender":"L"},{"Kosakata_Dasar":"ABIYYU","Gender":"L"},{"Kosakata_Dasar":"ABRAR","Gender":"L"},{"Kosakata_Dasar":"ABRISAM","Gender":"L"},{"Kosakata_Dasar":"ABSANA","Gender":"P"},{"Kosakata_Dasar":"ABYAN","Gender":"L"},{"Kosakata_Dasar":"ACHMAD","Gender":"L"},{"Kosakata_Dasar":"ADAM","Gender":"L"},{"Kosakata_Dasar":"ADDIN","Gender":"L"},{"Kosakata_Dasar":"ADEEVA","Gender":"P"},{"Kosakata_Dasar":"ADELARD","Gender":"L"},{"Kosakata_Dasar":"ADELIA","Gender":"P"},{"Kosakata_Dasar":"ADELLIA","Gender":"P"},{"Kosakata_Dasar":"ADEVA","Gender":"P"},{"Kosakata_Dasar":"ADHELYA","Gender":"P"},{"Kosakata_Dasar":"ADHIPA","Gender":"P"},{"Kosakata_Dasar":"ADHYASTA","Gender":"P"},{"Kosakata_Dasar":"ADI","Gender":"L"},{"Kosakata_Dasar":"ADILA","Gender":"P"},{"Kosakata_Dasar":"ADINDA","Gender":"P"},{"Kosakata_Dasar":"ADISTY","Gender":"P"},{"Kosakata_Dasar":"ADITYA","Gender":"P"},{"Kosakata_Dasar":"ADIVA","Gender":"P"},{"Kosakata_Dasar":"ADLER","Gender":"L"},{"Kosakata_Dasar":"ADRIAN","Gender":"L"},{"Kosakata_Dasar":"ADZANA","Gender":"P"},{"Kosakata_Dasar":"ADZARO","Gender":"L"},{"Kosakata_Dasar":"AFANIN","Gender":"L"},{"Kosakata_Dasar":"AFAREL","Gender":"L"},{"Kosakata_Dasar":"AFFAN","Gender":"L"},{"Kosakata_Dasar":"AFIFAH","Gender":"P"},{"Kosakata_Dasar":"AFIQA","Gender":"P"},{"Kosakata_Dasar":"AFRA","Gender":"P"},{"Kosakata_Dasar":"AFTANI","Gender":"P"},{"Kosakata_Dasar":"AGESTI","Gender":"L"},{"Kosakata_Dasar":"AGI","Gender":"P"},{"Kosakata_Dasar":"AGIILA","Gender":"P"},{"Kosakata_Dasar":"AGILA","Gender":"P"},{"Kosakata_Dasar":"AGNES","Gender":"L"},{"Kosakata_Dasar":"AGRIPNA","Gender":"P"},{"Kosakata_Dasar":"AGUERO","Gender":"L"},{"Kosakata_Dasar":"AGUNG","Gender":"L"},{"Kosakata_Dasar":"AGUSTINA","Gender":"P"},{"Kosakata_Dasar":"AGUSTINO","Gender":"L"},{"Kosakata_Dasar":"AHABBA","Gender":"P"},{"Kosakata_Dasar":"AHMAD","Gender":"L"},{"Kosakata_Dasar":"AHSAN","Gender":"L"},{"Kosakata_Dasar":"AHZA","Gender":"P"},{"Kosakata_Dasar":"AIDEN","Gender":"L"},{"Kosakata_Dasar":"AIKO","Gender":"L"},{"Kosakata_Dasar":"AIMATUZ","Gender":"L"},{"Kosakata_Dasar":"AINA","Gender":"P"},{"Kosakata_Dasar":"AINAYYA","Gender":"P"},{"Kosakata_Dasar":"AINI","Gender":"P"},{"Kosakata_Dasar":"AINURRAHMAN","Gender":"L"},{"Kosakata_Dasar":"AISH","Gender":"L"},{"Kosakata_Dasar":"AISHA","Gender":"P"},{"Kosakata_Dasar":"AISYA","Gender":"L"},{"Kosakata_Dasar":"AISYAFA","Gender":"P"},{"Kosakata_Dasar":"AISYAH","Gender":"P"},{"Kosakata_Dasar":"AJENG","Gender":"L"},{"Kosakata_Dasar":"AJI","Gender":"P"},{"Kosakata_Dasar":"AJL","Gender":"L"},{"Kosakata_Dasar":"AKBAR","Gender":"L"},{"Kosakata_Dasar":"AKHMAD","Gender":"L"},{"Kosakata_Dasar":"AKILLA","Gender":"P"},{"Kosakata_Dasar":"AKNI","Gender":"P"},{"Kosakata_Dasar":"AKYLA","Gender":"P"},{"Kosakata_Dasar":"AL","Gender":"N"},{"Kosakata_Dasar":"ALARIC","Gender":"L"},{"Kosakata_Dasar":"ALBA","Gender":"P"},{"Kosakata_Dasar":"ALBY","Gender":"P"},{"Kosakata_Dasar":"ALDEBARAN","Gender":"L"},{"Kosakata_Dasar":"ALDYA","Gender":"P"},{"Kosakata_Dasar":"ALFARO","Gender":"L"},{"Kosakata_Dasar":"ALFIAN","Gender":"L"},{"Kosakata_Dasar":"ALFONSUS","Gender":"L"},{"Kosakata_Dasar":"ALHUSNA","Gender":"P"},{"Kosakata_Dasar":"ALI","Gender":"P"},{"Kosakata_Dasar":"ALIF","Gender":"L"},{"Kosakata_Dasar":"ALIFAH","Gender":"P"},{"Kosakata_Dasar":"ALIFATUL","Gender":"L"},{"Kosakata_Dasar":"ALIFFA","Gender":"P"},{"Kosakata_Dasar":"ALIKA","Gender":"P"},{"Kosakata_Dasar":"ALIM","Gender":"L"},{"Kosakata_Dasar":"ALISYA","Gender":"L"},{"Kosakata_Dasar":"ALITFA","Gender":"P"},{"Kosakata_Dasar":"ALIVIA","Gender":"P"},{"Kosakata_Dasar":"ALIVIAN","Gender":"L"},{"Kosakata_Dasar":"ALIYA","Gender":"P"},{"Kosakata_Dasar":"ALIYAH","Gender":"P"},{"Kosakata_Dasar":"ALMAIRA","Gender":"P"},{"Kosakata_Dasar":"ALMIRA","Gender":"P"},{"Kosakata_Dasar":"ALSHEIRAZ","Gender":"L"},{"Kosakata_Dasar":"ALTAF","Gender":"L"},{"Kosakata_Dasar":"ALTAFARRAZ","Gender":"L"},{"Kosakata_Dasar":"ALVARO","Gender":"L"},{"Kosakata_Dasar":"ALVIAN","Gender":"L"},{"Kosakata_Dasar":"ALVIANSYAH","Gender":"P"},{"Kosakata_Dasar":"ALVINO","Gender":"L"},{"Kosakata_Dasar":"ALYA","Gender":"P"},{"Kosakata_Dasar":"ALYSA","Gender":"P"},{"Kosakata_Dasar":"AMAJIDA","Gender":"P"},{"Kosakata_Dasar":"AMALIA","Gender":"P"},{"Kosakata_Dasar":"AMANDA","Gender":"P"},{"Kosakata_Dasar":"AMARA","Gender":"P"},{"Kosakata_Dasar":"AMECOOL","Gender":"L"},{"Kosakata_Dasar":"AMELIA","Gender":"P"},{"Kosakata_Dasar":"AMIRA","Gender":"P"},{"Kosakata_Dasar":"AMRI","Gender":"L"},{"Kosakata_Dasar":"ANANDA","Gender":"P"},{"Kosakata_Dasar":"ANANTO","Gender":"L"},{"Kosakata_Dasar":"ANAYA","Gender":"P"},{"Kosakata_Dasar":"ANDANI","Gender":"P"},{"Kosakata_Dasar":"ANDARA","Gender":"P"},{"Kosakata_Dasar":"ANDEWAS","Gender":"L"},{"Kosakata_Dasar":"ANDHIN","Gender":"L"},{"Kosakata_Dasar":"ANDIKA","Gender":"P"},{"Kosakata_Dasar":"ANDREAS","Gender":"L"},{"Kosakata_Dasar":"ANDREYNA","Gender":"P"},{"Kosakata_Dasar":"ANDRIAN","Gender":"L"},{"Kosakata_Dasar":"ANGGARA","Gender":"P"},{"Kosakata_Dasar":"ANINDIA","Gender":"P"},{"Kosakata_Dasar":"ANINDITA","Gender":"P"},{"Kosakata_Dasar":"ANINDYA","Gender":"P"},{"Kosakata_Dasar":"ANISA","Gender":"P"},{"Kosakata_Dasar":"ANNABELA","Gender":"P"},{"Kosakata_Dasar":"ANNIDA","Gender":"P"},{"Kosakata_Dasar":"ANNISA","Gender":"P"},{"Kosakata_Dasar":"ANSYA","Gender":"L"},{"Kosakata_Dasar":"ANTON","Gender":"L"},{"Kosakata_Dasar":"ANUGERAH","Gender":"P"},{"Kosakata_Dasar":"ANUGRAH","Gender":"P"},{"Kosakata_Dasar":"APRIL","Gender":"L"},{"Kosakata_Dasar":"APRILIO","Gender":"L"},{"Kosakata_Dasar":"APRILLIA","Gender":"P"},{"Kosakata_Dasar":"AQILA","Gender":"P"},{"Kosakata_Dasar":"AQILLA","Gender":"P"},{"Kosakata_Dasar":"AQUEENA","Gender":"P"},{"Kosakata_Dasar":"AR","Gender":"L"},{"Kosakata_Dasar":"ARA","Gender":"P"},{"Kosakata_Dasar":"ARARYA","Gender":"P"},{"Kosakata_Dasar":"ARDANA","Gender":"P"},{"Kosakata_Dasar":"ARDANI","Gender":"P"},{"Kosakata_Dasar":"ARDANU","Gender":"L"},{"Kosakata_Dasar":"ARDIA","Gender":"P"},{"Kosakata_Dasar":"ARDIANSAH","Gender":"P"},{"Kosakata_Dasar":"ARDINA","Gender":"P"},{"Kosakata_Dasar":"ARDINI","Gender":"P"},{"Kosakata_Dasar":"ARELI","Gender":"P"},{"Kosakata_Dasar":"ARETA","Gender":"P"},{"Kosakata_Dasar":"ARFAKHSYAD","Gender":"L"},{"Kosakata_Dasar":"ARGA","Gender":"P"},{"Kosakata_Dasar":"ARI","Gender":"L"},{"Kosakata_Dasar":"ARIEF","Gender":"L"},{"Kosakata_Dasar":"ARIF","Gender":"L"},{"Kosakata_Dasar":"ARIFIN","Gender":"L"},{"Kosakata_Dasar":"ARIMBI","Gender":"P"},{"Kosakata_Dasar":"ARISTA","Gender":"P"},{"Kosakata_Dasar":"ARKA","Gender":"P"},{"Kosakata_Dasar":"ARKAAN","Gender":"L"},{"Kosakata_Dasar":"ARKAN","Gender":"L"},{"Kosakata_Dasar":"ARKANA","Gender":"P"},{"Kosakata_Dasar":"ARLANI","Gender":"P"},{"Kosakata_Dasar":"ARNA","Gender":"P"},{"Kosakata_Dasar":"ARRASYA","Gender":"L"},{"Kosakata_Dasar":"ARRUM","Gender":"P"},{"Kosakata_Dasar":"ARSHAKA","Gender":"P"},{"Kosakata_Dasar":"ARSHYFA","Gender":"P"},{"Kosakata_Dasar":"ARSYA","Gender":"L"},{"Kosakata_Dasar":"ARSYFA","Gender":"P"},{"Kosakata_Dasar":"ARTHA","Gender":"P"},{"Kosakata_Dasar":"ARTHAWIRYA","Gender":"P"},{"Kosakata_Dasar":"ARUMI","Gender":"P"},{"Kosakata_Dasar":"ARUNA","Gender":"P"},{"Kosakata_Dasar":"ARUNDAYA","Gender":"P"},{"Kosakata_Dasar":"ARVIN","Gender":"L"},{"Kosakata_Dasar":"ARYA","Gender":"N"},{"Kosakata_Dasar":"ARYANI","Gender":"P"},{"Kosakata_Dasar":"ARYANTO","Gender":"L"},{"Kosakata_Dasar":"ARYASUTA","Gender":"P"},{"Kosakata_Dasar":"ARYO","Gender":"L"},{"Kosakata_Dasar":"ARZAN","Gender":"L"},{"Kosakata_Dasar":"ASHARI","Gender":"L"},{"Kosakata_Dasar":"ASMARA","Gender":"P"},{"Kosakata_Dasar":"ASSADZILI","Gender":"P"},{"Kosakata_Dasar":"ASSROFI","Gender":"P"},{"Kosakata_Dasar":"ASTAGINA","Gender":"P"},{"Kosakata_Dasar":"ASTIANA","Gender":"P"},{"Kosakata_Dasar":"ASYA","Gender":"L"},{"Kosakata_Dasar":"ASYIFA","Gender":"P"},{"Kosakata_Dasar":"ATHA","Gender":"P"},{"Kosakata_Dasar":"ATHALLA","Gender":"P"},{"Kosakata_Dasar":"ATHALLAH","Gender":"P"},{"Kosakata_Dasar":"ATHARIZZ","Gender":"L"},{"Kosakata_Dasar":"ATHAYA","Gender":"P"},{"Kosakata_Dasar":"ATIFFANI","Gender":"P"},{"Kosakata_Dasar":"ATIKA","Gender":"P"},{"Kosakata_Dasar":"ATIQA","Gender":"P"},{"Kosakata_Dasar":"ATIQAH","Gender":"P"},{"Kosakata_Dasar":"ATIYA","Gender":"P"},{"Kosakata_Dasar":"ATTARIZZ","Gender":"L"},{"Kosakata_Dasar":"AUFA","Gender":"P"},{"Kosakata_Dasar":"AULIA","Gender":"P"},{"Kosakata_Dasar":"AULIYA","Gender":"P"},{"Kosakata_Dasar":"AURAA","Gender":"P"},{"Kosakata_Dasar":"AURANIA","Gender":"P"},{"Kosakata_Dasar":"AURELLIA","Gender":"P"},{"Kosakata_Dasar":"AURILLIO","Gender":"L"},{"Kosakata_Dasar":"AURUM","Gender":"P"},{"Kosakata_Dasar":"AVARIELLA","Gender":"P"},{"Kosakata_Dasar":"AVIKA","Gender":"P"},{"Kosakata_Dasar":"AVILIA","Gender":"P"},{"Kosakata_Dasar":"AVIRA","Gender":"P"},{"Kosakata_Dasar":"AVRIELI","Gender":"P"},{"Kosakata_Dasar":"AYLA","Gender":"P"},{"Kosakata_Dasar":"AYODYA","Gender":"P"},{"Kosakata_Dasar":"AYU","Gender":"P"},{"Kosakata_Dasar":"AYUBI","Gender":"P"},{"Kosakata_Dasar":"AYUDIA","Gender":"P"},{"Kosakata_Dasar":"AYUDYA","Gender":"P"},{"Kosakata_Dasar":"AYUKA","Gender":"P"},{"Kosakata_Dasar":"AYUNDA","Gender":"P"},{"Kosakata_Dasar":"AYUNINDYA","Gender":"P"},{"Kosakata_Dasar":"AYUNITA","Gender":"P"},{"Kosakata_Dasar":"AZ","Gender":"N"},{"Kosakata_Dasar":"AZAHRA","Gender":"P"},{"Kosakata_Dasar":"AZAKI","Gender":"P"},{"Kosakata_Dasar":"AZALIA","Gender":"P"},{"Kosakata_Dasar":"AZARA","Gender":"P"},{"Kosakata_Dasar":"AZELIA","Gender":"P"},{"Kosakata_Dasar":"AZHARKASIH","Gender":"L"},{"Kosakata_Dasar":"AZIGGY","Gender":"P"},{"Kosakata_Dasar":"AZIZAH","Gender":"P"},{"Kosakata_Dasar":"AZIZI","Gender":"P"},{"Kosakata_Dasar":"AZKA","Gender":"P"},{"Kosakata_Dasar":"AZKAYRA","Gender":"P"},{"Kosakata_Dasar":"AZKIAN","Gender":"L"},{"Kosakata_Dasar":"AZMI","Gender":"P"},{"Kosakata_Dasar":"AZNI","Gender":"P"},{"Kosakata_Dasar":"AZZAHRA","Gender":"P"},{"Kosakata_Dasar":"AZZAHWA","Gender":"P"},{"Kosakata_Dasar":"AZZAIRA","Gender":"P"},{"Kosakata_Dasar":"AZZAM","Gender":"L"},{"Kosakata_Dasar":"AZZAMY","Gender":"P"},{"Kosakata_Dasar":"AZZIGHAH","Gender":"P"},{"Kosakata_Dasar":"AZZUHRO","Gender":"L"},{"Kosakata_Dasar":"BAEHAAI","Gender":"P"},{"Kosakata_Dasar":"BAGAS","Gender":"L"},{"Kosakata_Dasar":"BAGASKARA","Gender":"P"},{"Kosakata_Dasar":"BAGUS","Gender":"L"},{"Kosakata_Dasar":"BAHTIAR","Gender":"L"},{"Kosakata_Dasar":"BAIHAQI","Gender":"P"},{"Kosakata_Dasar":"BAKTI","Gender":"L"},{"Kosakata_Dasar":"BALQIS","Gender":"L"},{"Kosakata_Dasar":"BANCIN","Gender":"L"},{"Kosakata_Dasar":"BANGSA","Gender":"P"},{"Kosakata_Dasar":"BANYU","Gender":"L"},{"Kosakata_Dasar":"BARRA","Gender":"P"},{"Kosakata_Dasar":"BAYU","Gender":"L"},{"Kosakata_Dasar":"BAYUDANA","Gender":"P"},{"Kosakata_Dasar":"BEKTI","Gender":"L"},{"Kosakata_Dasar":"BELVANIA","Gender":"P"},{"Kosakata_Dasar":"BELVIANA","Gender":"P"},{"Kosakata_Dasar":"BENAZIR","Gender":"L"},{"Kosakata_Dasar":"BENEDIKTA","Gender":"P"},{"Kosakata_Dasar":"BESTANTRY","Gender":"P"},{"Kosakata_Dasar":"BHADRAWI","Gender":"P"},{"Kosakata_Dasar":"BILLIAM","Gender":"L"},{"Kosakata_Dasar":"BIMA","Gender":"L"},{"Kosakata_Dasar":"BINARJATI","Gender":"L"},{"Kosakata_Dasar":"BINTANG","Gender":"L"},{"Kosakata_Dasar":"BIRU","Gender":"L"},{"Kosakata_Dasar":"BIYANKA","Gender":"P"},{"Kosakata_Dasar":"BIYANMAR","Gender":"L"},{"Kosakata_Dasar":"BONAVENTURA","Gender":"P"},{"Kosakata_Dasar":"BONDAN","Gender":"L"},{"Kosakata_Dasar":"BTARATANTULADHA","Gender":"P"},{"Kosakata_Dasar":"CAHAYA","Gender":"P"},{"Kosakata_Dasar":"CAHYADEWI","Gender":"P"},{"Kosakata_Dasar":"CAHYANI","Gender":"P"},{"Kosakata_Dasar":"CALLISTA","Gender":"P"},{"Kosakata_Dasar":"CALLYSTA","Gender":"P"},{"Kosakata_Dasar":"CANDRA","Gender":"L"},{"Kosakata_Dasar":"CARISSA","Gender":"P"},{"Kosakata_Dasar":"CASMIRA","Gender":"P"},{"Kosakata_Dasar":"CATHILIN","Gender":"L"},{"Kosakata_Dasar":"CATUR","Gender":"L"},{"Kosakata_Dasar":"CHARISTA","Gender":"P"},{"Kosakata_Dasar":"CHIARA","Gender":"P"},{"Kosakata_Dasar":"CHRISTIAN","Gender":"L"},{"Kosakata_Dasar":"CLARESTA","Gender":"P"},{"Kosakata_Dasar":"COLIEF","Gender":"L"},{"Kosakata_Dasar":"CORALIE","Gender":"P"},{"Kosakata_Dasar":"CRISHONA","Gender":"P"},{"Kosakata_Dasar":"CRISTINAWATI","Gender":"L"},{"Kosakata_Dasar":"CYNARA","Gender":"P"},{"Kosakata_Dasar":"DAFA","Gender":"P"},{"Kosakata_Dasar":"DAFFA","Gender":"P"},{"Kosakata_Dasar":"DANADYAKSA","Gender":"P"},{"Kosakata_Dasar":"DANANG","Gender":"L"},{"Kosakata_Dasar":"DANENDRA","Gender":"L"},{"Kosakata_Dasar":"DANESHA","Gender":"P"},{"Kosakata_Dasar":"DANIAL","Gender":"L"},{"Kosakata_Dasar":"DANISWARA","Gender":"P"},{"Kosakata_Dasar":"DARAPUSPITA","Gender":"P"},{"Kosakata_Dasar":"DAVID","Gender":"L"},{"Kosakata_Dasar":"DEANDRA","Gender":"L"},{"Kosakata_Dasar":"DEATAMA","Gender":"L"},{"Kosakata_Dasar":"DEBORAH","Gender":"P"},{"Kosakata_Dasar":"DEDY","Gender":"P"},{"Kosakata_Dasar":"DELA","Gender":"P"},{"Kosakata_Dasar":"DELIA","Gender":"P"},{"Kosakata_Dasar":"DELIMA","Gender":"L"},{"Kosakata_Dasar":"DELLANY","Gender":"P"},{"Kosakata_Dasar":"DENAYA","Gender":"P"},{"Kosakata_Dasar":"DENIAR","Gender":"L"},{"Kosakata_Dasar":"DESTRIA","Gender":"P"},{"Kosakata_Dasar":"DESTRIYA","Gender":"P"},{"Kosakata_Dasar":"DEVA","Gender":"P"},{"Kosakata_Dasar":"DEVANADA","Gender":"P"},{"Kosakata_Dasar":"DEVELYN","Gender":"L"},{"Kosakata_Dasar":"DEWI","Gender":"P"},{"Kosakata_Dasar":"DHANANJAYA","Gender":"P"},{"Kosakata_Dasar":"DHANI","Gender":"P"},{"Kosakata_Dasar":"DHARMASENA","Gender":"P"},{"Kosakata_Dasar":"DHIAFAKHRI","Gender":"L"},{"Kosakata_Dasar":"DHIBA","Gender":"P"},{"Kosakata_Dasar":"DHIMAS","Gender":"L"},{"Kosakata_Dasar":"DHISYA","Gender":"L"},{"Kosakata_Dasar":"DHITA","Gender":"P"},{"Kosakata_Dasar":"DIAN","Gender":"L"},{"Kosakata_Dasar":"DIANA","Gender":"P"},{"Kosakata_Dasar":"DIANDRA","Gender":"L"},{"Kosakata_Dasar":"DIFA","Gender":"P"},{"Kosakata_Dasar":"DIMAS","Gender":"L"},{"Kosakata_Dasar":"DINA","Gender":"P"},{"Kosakata_Dasar":"DINAR","Gender":"L"},{"Kosakata_Dasar":"DINDA","Gender":"P"},{"Kosakata_Dasar":"DITA","Gender":"P"},{"Kosakata_Dasar":"DITO","Gender":"L"},{"Kosakata_Dasar":"DITYA","Gender":"P"},{"Kosakata_Dasar":"DIYANDRA","Gender":"L"},{"Kosakata_Dasar":"DIYANTIKA","Gender":"P"},{"Kosakata_Dasar":"DWI","Gender":"N"},{"Kosakata_Dasar":"DWIANA","Gender":"P"},{"Kosakata_Dasar":"DWIPUTRA","Gender":"P"},{"Kosakata_Dasar":"DYAH","Gender":"P"},{"Kosakata_Dasar":"DYLAN","Gender":"L"},{"Kosakata_Dasar":"DZAKI","Gender":"P"},{"Kosakata_Dasar":"DZAKY","Gender":"P"},{"Kosakata_Dasar":"DZIKRINA","Gender":"P"},{"Kosakata_Dasar":"DZIKRIYAH","Gender":"P"},{"Kosakata_Dasar":"EARLY","Gender":"P"},{"Kosakata_Dasar":"EFFENDI","Gender":"L"},{"Kosakata_Dasar":"EKA","Gender":"N"},{"Kosakata_Dasar":"EL","Gender":"N"},{"Kosakata_Dasar":"ELEA","Gender":"P"},{"Kosakata_Dasar":"ELECTRA","Gender":"P"},{"Kosakata_Dasar":"ELEVENTIARI","Gender":"L"},{"Kosakata_Dasar":"ELIYSIA","Gender":"P"},{"Kosakata_Dasar":"ELIZA","Gender":"P"},{"Kosakata_Dasar":"ELMAN","Gender":"L"},{"Kosakata_Dasar":"EMANUEL","Gender":"L"},{"Kosakata_Dasar":"EMBUN","Gender":"L"},{"Kosakata_Dasar":"EMIR","Gender":"L"},{"Kosakata_Dasar":"EMMANUELLA","Gender":"P"},{"Kosakata_Dasar":"ENDRO","Gender":"L"},{"Kosakata_Dasar":"ENERIDA","Gender":"P"},{"Kosakata_Dasar":"ER","Gender":"L"},{"Kosakata_Dasar":"ERKANOA","Gender":"P"},{"Kosakata_Dasar":"ERLANGGA","Gender":"P"},{"Kosakata_Dasar":"ERLITA","Gender":"P"},{"Kosakata_Dasar":"ERSITA","Gender":"P"},{"Kosakata_Dasar":"ERVITO","Gender":"L"},{"Kosakata_Dasar":"ERYANSYAH","Gender":"P"},{"Kosakata_Dasar":"EVAN","Gender":"L"},{"Kosakata_Dasar":"FACHRY","Gender":"P"},{"Kosakata_Dasar":"FADHEL","Gender":"L"},{"Kosakata_Dasar":"FADHIL","Gender":"L"},{"Kosakata_Dasar":"FADHILAH","Gender":"P"},{"Kosakata_Dasar":"FADHILLA","Gender":"P"},{"Kosakata_Dasar":"FADILLA","Gender":"P"},{"Kosakata_Dasar":"FADLAN","Gender":"L"},{"Kosakata_Dasar":"FADYA","Gender":"P"},{"Kosakata_Dasar":"FAEYZA","Gender":"P"},{"Kosakata_Dasar":"FAHIRA","Gender":"P"},{"Kosakata_Dasar":"FAHMIDA","Gender":"P"},{"Kosakata_Dasar":"FAHRIANSYAH","Gender":"P"},{"Kosakata_Dasar":"FAHRIL","Gender":"L"},{"Kosakata_Dasar":"FAIDH","Gender":"L"},{"Kosakata_Dasar":"FAIHA","Gender":"P"},{"Kosakata_Dasar":"FAIHANA","Gender":"P"},{"Kosakata_Dasar":"FAIRUZ","Gender":"L"},{"Kosakata_Dasar":"FAITH","Gender":"L"},{"Kosakata_Dasar":"FAIZ","Gender":"L"},{"Kosakata_Dasar":"FAIZA","Gender":"P"},{"Kosakata_Dasar":"FAJAR","Gender":"L"},{"Kosakata_Dasar":"FAJRI","Gender":"L"},{"Kosakata_Dasar":"FAKHRI","Gender":"L"},{"Kosakata_Dasar":"FANDI","Gender":"L"},{"Kosakata_Dasar":"FANDINI","Gender":"P"},{"Kosakata_Dasar":"FANISA","Gender":"P"},{"Kosakata_Dasar":"FANNY","Gender":"P"},{"Kosakata_Dasar":"FAQIH","Gender":"L"},{"Kosakata_Dasar":"FARA","Gender":"P"},{"Kosakata_Dasar":"FARAH","Gender":"P"},{"Kosakata_Dasar":"FARANISA","Gender":"P"},{"Kosakata_Dasar":"FARELL","Gender":"L"},{"Kosakata_Dasar":"FARHA","Gender":"P"},{"Kosakata_Dasar":"FARHAN","Gender":"L"},{"Kosakata_Dasar":"FARID","Gender":"L"},{"Kosakata_Dasar":"FARIDA","Gender":"P"},{"Kosakata_Dasar":"FARIZI","Gender":"P"},{"Kosakata_Dasar":"FARZANA","Gender":"P"},{"Kosakata_Dasar":"FATHIA","Gender":"P"},{"Kosakata_Dasar":"FATHIAH","Gender":"P"},{"Kosakata_Dasar":"FATHIR","Gender":"L"},{"Kosakata_Dasar":"FATHIYYATURAHMA","Gender":"L"},{"Kosakata_Dasar":"FATHURROZI","Gender":"P"},{"Kosakata_Dasar":"FATIH","Gender":"L"},{"Kosakata_Dasar":"FATIHAH","Gender":"P"},{"Kosakata_Dasar":"FATIHAN","Gender":"L"},{"Kosakata_Dasar":"FATIMAH","Gender":"P"},{"Kosakata_Dasar":"FATISTA","Gender":"P"},{"Kosakata_Dasar":"FATMAWATI","Gender":"L"},{"Kosakata_Dasar":"FAUZA","Gender":"P"},{"Kosakata_Dasar":"FAYZA","Gender":"P"},{"Kosakata_Dasar":"FAZIAN","Gender":"L"},{"Kosakata_Dasar":"FAZILA","Gender":"P"},{"Kosakata_Dasar":"FEBISHAFIRA","Gender":"P"},{"Kosakata_Dasar":"FEBRIANA","Gender":"P"},{"Kosakata_Dasar":"FEBRIANTI","Gender":"L"},{"Kosakata_Dasar":"FEBRIYANTO","Gender":"L"},{"Kosakata_Dasar":"FELENA","Gender":"P"},{"Kosakata_Dasar":"FEORA","Gender":"P"},{"Kosakata_Dasar":"FERI","Gender":"L"},{"Kosakata_Dasar":"FERIAWAN","Gender":"L"},{"Kosakata_Dasar":"FERNANDRA","Gender":"L"},{"Kosakata_Dasar":"FIKRI","Gender":"L"},{"Kosakata_Dasar":"FIRAYZA","Gender":"P"},{"Kosakata_Dasar":"FIRDASARI","Gender":"L"},{"Kosakata_Dasar":"FIRDAUSI","Gender":"P"},{"Kosakata_Dasar":"FIRMANSYAH","Gender":"P"},{"Kosakata_Dasar":"FITRI","Gender":"L"},{"Kosakata_Dasar":"FITRIANSYAH","Gender":"P"},{"Kosakata_Dasar":"FITYANZA","Gender":"P"},{"Kosakata_Dasar":"FLABIANUS","Gender":"L"},{"Kosakata_Dasar":"FRANCISKO","Gender":"L"},{"Kosakata_Dasar":"GABRIEL","Gender":"L"},{"Kosakata_Dasar":"GALUH","Gender":"L"},{"Kosakata_Dasar":"GANES","Gender":"L"},{"Kosakata_Dasar":"GARDANA","Gender":"P"},{"Kosakata_Dasar":"GAVRIEL","Gender":"L"},{"Kosakata_Dasar":"GEFANDA","Gender":"P"},{"Kosakata_Dasar":"GENDHIS","Gender":"L"},{"Kosakata_Dasar":"GEOVANI","Gender":"P"},{"Kosakata_Dasar":"GHAISAN","Gender":"L"},{"Kosakata_Dasar":"GHANI","Gender":"P"},{"Kosakata_Dasar":"GIBRAN","Gender":"L"},{"Kosakata_Dasar":"GILANG","Gender":"L"},{"Kosakata_Dasar":"GONITA","Gender":"P"},{"Kosakata_Dasar":"GUSYAFITRI","Gender":"L"},{"Kosakata_Dasar":"HAFIDZ","Gender":"L"},{"Kosakata_Dasar":"HAFIDZAH","Gender":"P"},{"Kosakata_Dasar":"HAFIS","Gender":"L"},{"Kosakata_Dasar":"HAFIZH","Gender":"L"},{"Kosakata_Dasar":"HAFIZHA","Gender":"P"},{"Kosakata_Dasar":"HAFSA","Gender":"P"},{"Kosakata_Dasar":"HAFY","Gender":"P"},{"Kosakata_Dasar":"HAIDAR","Gender":"L"},{"Kosakata_Dasar":"HAKIKI","Gender":"P"},{"Kosakata_Dasar":"HAKIM","Gender":"L"},{"Kosakata_Dasar":"HALWA","Gender":"P"},{"Kosakata_Dasar":"HAMDAN","Gender":"L"},{"Kosakata_Dasar":"HAMMAM","Gender":"L"},{"Kosakata_Dasar":"HANA","Gender":"P"},{"Kosakata_Dasar":"HANAN","Gender":"L"},{"Kosakata_Dasar":"HANANIA","Gender":"P"},{"Kosakata_Dasar":"HANDAYANI","Gender":"P"},{"Kosakata_Dasar":"HANDRIYANTO","Gender":"L"},{"Kosakata_Dasar":"HANIF","Gender":"L"},{"Kosakata_Dasar":"HANIFYA","Gender":"P"},{"Kosakata_Dasar":"HANNAH","Gender":"P"},{"Kosakata_Dasar":"HANUNG","Gender":"L"},{"Kosakata_Dasar":"HARDYA","Gender":"P"},{"Kosakata_Dasar":"HARISMA","Gender":"L"},{"Kosakata_Dasar":"HARISTIAWAN","Gender":"L"},{"Kosakata_Dasar":"HARU","Gender":"L"},{"Kosakata_Dasar":"HASANAH","Gender":"P"},{"Kosakata_Dasar":"HASNA","Gender":"P"},{"Kosakata_Dasar":"HASSAN","Gender":"L"},{"Kosakata_Dasar":"HAYDEN","Gender":"L"},{"Kosakata_Dasar":"HAYKAL","Gender":"L"},{"Kosakata_Dasar":"HAZLA","Gender":"P"},{"Kosakata_Dasar":"HELGA","Gender":"P"},{"Kosakata_Dasar":"HERJUNO","Gender":"L"},{"Kosakata_Dasar":"HIDEO","Gender":"L"},{"Kosakata_Dasar":"HIDETOSHI","Gender":"P"},{"Kosakata_Dasar":"HIDEYOSHI","Gender":"P"},{"Kosakata_Dasar":"HIKARI","Gender":"L"},{"Kosakata_Dasar":"HIKMAH","Gender":"P"},{"Kosakata_Dasar":"HISYAM","Gender":"L"},{"Kosakata_Dasar":"HULWAH","Gender":"P"},{"Kosakata_Dasar":"HUMAIRA","Gender":"P"},{"Kosakata_Dasar":"HUSAINI","Gender":"P"},{"Kosakata_Dasar":"HUSNA","Gender":"P"},{"Kosakata_Dasar":"HUSSEIN","Gender":"L"},{"Kosakata_Dasar":"HUTAMI","Gender":"P"},{"Kosakata_Dasar":"HUTOMO","Gender":"L"},{"Kosakata_Dasar":"HYLWANA","Gender":"P"},{"Kosakata_Dasar":"IABAL","Gender":"L"},{"Kosakata_Dasar":"IBRA","Gender":"P"},{"Kosakata_Dasar":"IBRAHIM","Gender":"L"},{"Kosakata_Dasar":"ILHAMDANI","Gender":"P"},{"Kosakata_Dasar":"IMMANUEL","Gender":"L"},{"Kosakata_Dasar":"INARA","Gender":"P"},{"Kosakata_Dasar":"INAYA","Gender":"P"},{"Kosakata_Dasar":"INDRIANI","Gender":"P"},{"Kosakata_Dasar":"INTAN","Gender":"L"},{"Kosakata_Dasar":"INTEN","Gender":"L"},{"Kosakata_Dasar":"IQBAL","Gender":"L"},{"Kosakata_Dasar":"IRAWATI","Gender":"L"},{"Kosakata_Dasar":"IRFAN","Gender":"L"},{"Kosakata_Dasar":"IRHAM","Gender":"L"},{"Kosakata_Dasar":"IRVAN","Gender":"L"},{"Kosakata_Dasar":"ISMAIL","Gender":"L"},{"Kosakata_Dasar":"ISMAN","Gender":"L"},{"Kosakata_Dasar":"ISMAWAN","Gender":"L"},{"Kosakata_Dasar":"ISMAWATI","Gender":"L"},{"Kosakata_Dasar":"ISNA","Gender":"P"},{"Kosakata_Dasar":"ISTADI","Gender":"L"},{"Kosakata_Dasar":"ISTANIA","Gender":"P"},{"Kosakata_Dasar":"ISWANDARI","Gender":"L"},{"Kosakata_Dasar":"ISWANDARU","Gender":"L"},{"Kosakata_Dasar":"ISWANTO","Gender":"L"},{"Kosakata_Dasar":"ISWORO","Gender":"L"},{"Kosakata_Dasar":"IVA","Gender":"P"},{"Kosakata_Dasar":"IVANO","Gender":"L"},{"Kosakata_Dasar":"IZZANI","Gender":"P"},{"Kosakata_Dasar":"IZZATUNNISA","Gender":"P"},{"Kosakata_Dasar":"IZZATUR","Gender":"L"},{"Kosakata_Dasar":"JADDAN","Gender":"L"},{"Kosakata_Dasar":"JAHADA","Gender":"P"},{"Kosakata_Dasar":"JAMIAT","Gender":"L"},{"Kosakata_Dasar":"JAMIL","Gender":"L"},{"Kosakata_Dasar":"JANNAH","Gender":"P"},{"Kosakata_Dasar":"JASSER","Gender":"L"},{"Kosakata_Dasar":"JAVAS","Gender":"L"},{"Kosakata_Dasar":"JAVIER","Gender":"L"},{"Kosakata_Dasar":"JAYA","Gender":"P"},{"Kosakata_Dasar":"JECONIA","Gender":"P"},{"Kosakata_Dasar":"JHEAND","Gender":"L"},{"Kosakata_Dasar":"JIHAN","Gender":"L"},{"Kosakata_Dasar":"JOHAN","Gender":"L"},{"Kosakata_Dasar":"JOSEA","Gender":"P"},{"Kosakata_Dasar":"JOVHENLY","Gender":"P"},{"Kosakata_Dasar":"JOVKENZO","Gender":"L"},{"Kosakata_Dasar":"JUAN","Gender":"L"},{"Kosakata_Dasar":"JULIA","Gender":"P"},{"Kosakata_Dasar":"JULIAN","Gender":"L"},{"Kosakata_Dasar":"JUNIANTO","Gender":"L"},{"Kosakata_Dasar":"KAFARA","Gender":"P"},{"Kosakata_Dasar":"KAFFA","Gender":"P"},{"Kosakata_Dasar":"KALEB","Gender":"L"},{"Kosakata_Dasar":"KALEEVA","Gender":"P"},{"Kosakata_Dasar":"KALYANI","Gender":"P"},{"Kosakata_Dasar":"KAMANDRIYANTO","Gender":"L"},{"Kosakata_Dasar":"KAMILA","Gender":"P"},{"Kosakata_Dasar":"KANAKA","Gender":"P"},{"Kosakata_Dasar":"KANISA","Gender":"P"},{"Kosakata_Dasar":"KANSHA","Gender":"P"},{"Kosakata_Dasar":"KARTA","Gender":"P"},{"Kosakata_Dasar":"KARTIKA","Gender":"P"},{"Kosakata_Dasar":"KARUNIA","Gender":"P"},{"Kosakata_Dasar":"KAULIKA","Gender":"P"},{"Kosakata_Dasar":"KAYLA","Gender":"P"},{"Kosakata_Dasar":"KEISHA","Gender":"P"},{"Kosakata_Dasar":"KENDHIT","Gender":"L"},{"Kosakata_Dasar":"KENISHA","Gender":"P"},{"Kosakata_Dasar":"KENNY","Gender":"P"},{"Kosakata_Dasar":"KENZO","Gender":"L"},{"Kosakata_Dasar":"KEONA","Gender":"P"},{"Kosakata_Dasar":"KERTONEGORO","Gender":"L"},{"Kosakata_Dasar":"KEYLA","Gender":"P"},{"Kosakata_Dasar":"KEYSABILA","Gender":"P"},{"Kosakata_Dasar":"KEZIA","Gender":"P"},{"Kosakata_Dasar":"KHAIFIYA","Gender":"P"},{"Kosakata_Dasar":"KHAIRA","Gender":"P"},{"Kosakata_Dasar":"KHAIRANI","Gender":"P"},{"Kosakata_Dasar":"KHAIRUNNISA","Gender":"P"},{"Kosakata_Dasar":"KHAIRURRAFIQI","Gender":"P"},{"Kosakata_Dasar":"KHALIDA","Gender":"P"},{"Kosakata_Dasar":"KHALIFAH","Gender":"P"},{"Kosakata_Dasar":"KHALILI","Gender":"P"},{"Kosakata_Dasar":"KHALISA","Gender":"P"},{"Kosakata_Dasar":"KHALUMAH","Gender":"P"},{"Kosakata_Dasar":"KHANSA","Gender":"P"},{"Kosakata_Dasar":"KHASAN","Gender":"L"},{"Kosakata_Dasar":"KHASANAH","Gender":"P"},{"Kosakata_Dasar":"KHASHIBAH","Gender":"P"},{"Kosakata_Dasar":"KHAYRA","Gender":"P"},{"Kosakata_Dasar":"KHINANDRA","Gender":"L"},{"Kosakata_Dasar":"KHINARA","Gender":"P"},{"Kosakata_Dasar":"KHOERUNNISA","Gender":"P"},{"Kosakata_Dasar":"KHOIRINA","Gender":"P"},{"Kosakata_Dasar":"KHOIRUN","Gender":"L"},{"Kosakata_Dasar":"KHOIRUNNISA","Gender":"P"},{"Kosakata_Dasar":"KHOLIFAH","Gender":"P"},{"Kosakata_Dasar":"KHOLILURROHMAN","Gender":"L"},{"Kosakata_Dasar":"KINAN","Gender":"L"},{"Kosakata_Dasar":"KINANTHI","Gender":"P"},{"Kosakata_Dasar":"KINANTI","Gender":"L"},{"Kosakata_Dasar":"KINARA","Gender":"P"},{"Kosakata_Dasar":"KINASIH","Gender":"L"},{"Kosakata_Dasar":"KIRANA","Gender":"P"},{"Kosakata_Dasar":"KRISMA","Gender":"L"},{"Kosakata_Dasar":"KRISNA","Gender":"P"},{"Kosakata_Dasar":"KRISTANTO","Gender":"L"},{"Kosakata_Dasar":"KRISYANJI","Gender":"P"},{"Kosakata_Dasar":"KUMARA","Gender":"P"},{"Kosakata_Dasar":"KURNIAWAI","Gender":"P"},{"Kosakata_Dasar":"KURNIAWAN","Gender":"L"},{"Kosakata_Dasar":"KUSUMA","Gender":"L"},{"Kosakata_Dasar":"KUSUMANINGRUM","Gender":"P"},{"Kosakata_Dasar":"KYA","Gender":"P"},{"Kosakata_Dasar":"KYARA","Gender":"P"},{"Kosakata_Dasar":"LABIB","Gender":"L"},{"Kosakata_Dasar":"LAGURTH","Gender":"L"},{"Kosakata_Dasar":"LAIHA","Gender":"P"},{"Kosakata_Dasar":"LAIMA","Gender":"L"},{"Kosakata_Dasar":"LAIRANE","Gender":"P"},{"Kosakata_Dasar":"LAKSITA","Gender":"P"},{"Kosakata_Dasar":"LARASATI","Gender":"L"},{"Kosakata_Dasar":"LATIFA","Gender":"P"},{"Kosakata_Dasar":"LATIFAH","Gender":"P"},{"Kosakata_Dasar":"LATIFATUZZAHRO","Gender":"L"},{"Kosakata_Dasar":"LAY","Gender":"P"},{"Kosakata_Dasar":"LEO","Gender":"L"},{"Kosakata_Dasar":"LESTARI","Gender":"L"},{"Kosakata_Dasar":"LESUNG","Gender":"L"},{"Kosakata_Dasar":"LIBNI","Gender":"P"},{"Kosakata_Dasar":"LINDIWA","Gender":"P"},{"Kosakata_Dasar":"LIONEL","Gender":"L"},{"Kosakata_Dasar":"LISKA","Gender":"P"},{"Kosakata_Dasar":"LITUHAYU","Gender":"L"},{"Kosakata_Dasar":"LOVIE","Gender":"P"},{"Kosakata_Dasar":"LUBIS","Gender":"L"},{"Kosakata_Dasar":"LUKAS","Gender":"L"},{"Kosakata_Dasar":"LUTHFI","Gender":"P"},{"Kosakata_Dasar":"LUTHFIANA","Gender":"P"},{"Kosakata_Dasar":"MADINA","Gender":"P"},{"Kosakata_Dasar":"MAEZURRRA","Gender":"P"},{"Kosakata_Dasar":"MAGHRIBI","Gender":"P"},{"Kosakata_Dasar":"MAHARANI","Gender":"P"},{"Kosakata_Dasar":"MAHENDRA","Gender":"L"},{"Kosakata_Dasar":"MAHESWARA","Gender":"P"},{"Kosakata_Dasar":"MAHIRA","Gender":"P"},{"Kosakata_Dasar":"MAHYA","Gender":"P"},{"Kosakata_Dasar":"MAIMANAH","Gender":"P"},{"Kosakata_Dasar":"MANGGALA","Gender":"P"},{"Kosakata_Dasar":"MARCELLO","Gender":"L"},{"Kosakata_Dasar":"MARGATISA","Gender":"P"},{"Kosakata_Dasar":"MARITSA","Gender":"P"},{"Kosakata_Dasar":"MARITZA","Gender":"P"},{"Kosakata_Dasar":"MARSHA","Gender":"P"},{"Kosakata_Dasar":"MARUF","Gender":"L"},{"Kosakata_Dasar":"MASAYU","Gender":"L"},{"Kosakata_Dasar":"MAULANA","Gender":"P"},{"Kosakata_Dasar":"MAULANII","Gender":"P"},{"Kosakata_Dasar":"MAULIA","Gender":"P"},{"Kosakata_Dasar":"MAULIDA","Gender":"P"},{"Kosakata_Dasar":"MAURINOV","Gender":"L"},{"Kosakata_Dasar":"MAYDINA","Gender":"P"},{"Kosakata_Dasar":"MEGA","Gender":"P"},{"Kosakata_Dasar":"MEILA","Gender":"P"},{"Kosakata_Dasar":"MEILANINGSIH","Gender":"L"},{"Kosakata_Dasar":"MEISYA","Gender":"L"},{"Kosakata_Dasar":"MELAN","Gender":"L"},{"Kosakata_Dasar":"MELODY","Gender":"P"},{"Kosakata_Dasar":"MEY","Gender":"P"},{"Kosakata_Dasar":"MEYSHIA","Gender":"P"},{"Kosakata_Dasar":"MIFTA","Gender":"P"},{"Kosakata_Dasar":"MIKAELA","Gender":"P"},{"Kosakata_Dasar":"MIKAYLA","Gender":"P"},{"Kosakata_Dasar":"MIRZA","Gender":"P"},{"Kosakata_Dasar":"MITAYANI","Gender":"P"},{"Kosakata_Dasar":"MITZVAH","Gender":"P"},{"Kosakata_Dasar":"MUAFA","Gender":"P"},{"Kosakata_Dasar":"MUBAROK","Gender":"L"},{"Kosakata_Dasar":"MUHAMAD","Gender":"L"},{"Kosakata_Dasar":"MUHAMMAD","Gender":"L"},{"Kosakata_Dasar":"MUKHTARULLAH","Gender":"P"},{"Kosakata_Dasar":"MUNAWAROH","Gender":"L"},{"Kosakata_Dasar":"MUNAYA","Gender":"P"},{"Kosakata_Dasar":"MUSLIMAH","Gender":"P"},{"Kosakata_Dasar":"MUSTAQIM","Gender":"L"},{"Kosakata_Dasar":"MUSTHAFA","Gender":"P"},{"Kosakata_Dasar":"MUTAQQIN","Gender":"L"},{"Kosakata_Dasar":"MUTI","Gender":"L"},{"Kosakata_Dasar":"MUTIA","Gender":"P"},{"Kosakata_Dasar":"MUTIARA","Gender":"P"},{"Kosakata_Dasar":"MYIESHA","Gender":"P"},{"Kosakata_Dasar":"NAAILA","Gender":"P"},{"Kosakata_Dasar":"NABILA","Gender":"P"},{"Kosakata_Dasar":"NADA","Gender":"P"},{"Kosakata_Dasar":"NADHIF","Gender":"L"},{"Kosakata_Dasar":"NADHIFA","Gender":"P"},{"Kosakata_Dasar":"NADINE","Gender":"P"},{"Kosakata_Dasar":"NADIRA","Gender":"P"},{"Kosakata_Dasar":"NAEZA","Gender":"P"},{"Kosakata_Dasar":"NAFIA","Gender":"P"},{"Kosakata_Dasar":"NAFISA","Gender":"P"},{"Kosakata_Dasar":"NAFISHA","Gender":"P"},{"Kosakata_Dasar":"NAHDI","Gender":"L"},{"Kosakata_Dasar":"NAIFAH","Gender":"P"},{"Kosakata_Dasar":"NAILA","Gender":"P"},{"Kosakata_Dasar":"NAILY","Gender":"P"},{"Kosakata_Dasar":"NAJWA","Gender":"P"},{"Kosakata_Dasar":"NAJWAA","Gender":"P"},{"Kosakata_Dasar":"NAMIRA","Gender":"P"},{"Kosakata_Dasar":"NANDA","Gender":"P"},{"Kosakata_Dasar":"NAOMI","Gender":"P"},{"Kosakata_Dasar":"NARAYYA","Gender":"P"},{"Kosakata_Dasar":"NARENDRA","Gender":"L"},{"Kosakata_Dasar":"NARENDRAYUDHA","Gender":"P"},{"Kosakata_Dasar":"NASHIHATUL","Gender":"L"},{"Kosakata_Dasar":"NASRULLAH","Gender":"P"},{"Kosakata_Dasar":"NASRULLOH","Gender":"L"},{"Kosakata_Dasar":"NASYA","Gender":"L"},{"Kosakata_Dasar":"NASYWAPUTRI","Gender":"L"},{"Kosakata_Dasar":"NAUFAL","Gender":"L"},{"Kosakata_Dasar":"NAURA","Gender":"P"},{"Kosakata_Dasar":"NAUROH","Gender":"L"},{"Kosakata_Dasar":"NAUVAL","Gender":"L"},{"Kosakata_Dasar":"NAVEEN","Gender":"L"},{"Kosakata_Dasar":"NAYRA","Gender":"P"},{"Kosakata_Dasar":"NAZHIFA","Gender":"P"},{"Kosakata_Dasar":"NAZIAN","Gender":"L"},{"Kosakata_Dasar":"NAZILLA","Gender":"P"},{"Kosakata_Dasar":"NAZZALA","Gender":"P"},{"Kosakata_Dasar":"NEEHA","Gender":"P"},{"Kosakata_Dasar":"NEFFA","Gender":"P"},{"Kosakata_Dasar":"NEOFAL","Gender":"L"},{"Kosakata_Dasar":"NESHA","Gender":"P"},{"Kosakata_Dasar":"NEYLA","Gender":"P"},{"Kosakata_Dasar":"NIDA","Gender":"P"},{"Kosakata_Dasar":"NIKITA","Gender":"P"},{"Kosakata_Dasar":"NIKMATUL","Gender":"L"},{"Kosakata_Dasar":"NINDIRA","Gender":"P"},{"Kosakata_Dasar":"NINDYA","Gender":"P"},{"Kosakata_Dasar":"NINDYANUGRAHA","Gender":"P"},{"Kosakata_Dasar":"NIRWASHINTA","Gender":"P"},{"Kosakata_Dasar":"NISA","Gender":"P"},{"Kosakata_Dasar":"NIVAND","Gender":"L"},{"Kosakata_Dasar":"NIZAR","Gender":"L"},{"Kosakata_Dasar":"NIZHA","Gender":"P"},{"Kosakata_Dasar":"NOER","Gender":"L"},{"Kosakata_Dasar":"NOOR","Gender":"L"},{"Kosakata_Dasar":"NOUFALYN","Gender":"L"},{"Kosakata_Dasar":"NOVANDITO","Gender":"L"},{"Kosakata_Dasar":"NOVIA","Gender":"P"},{"Kosakata_Dasar":"NOVIAN","Gender":"L"},{"Kosakata_Dasar":"NOVIANA","Gender":"P"},{"Kosakata_Dasar":"NOVITASARI","Gender":"L"},{"Kosakata_Dasar":"NUFAIL","Gender":"L"},{"Kosakata_Dasar":"NUFALIA","Gender":"P"},{"Kosakata_Dasar":"NUGRAHA","Gender":"P"},{"Kosakata_Dasar":"NUGROHO","Gender":"L"},{"Kosakata_Dasar":"NUHA","Gender":"P"},{"Kosakata_Dasar":"NUR","Gender":"N"},{"Kosakata_Dasar":"NURDAFFA","Gender":"P"},{"Kosakata_Dasar":"NURDIANSAH","Gender":"P"},{"Kosakata_Dasar":"NURHANIFAH","Gender":"P"},{"Kosakata_Dasar":"NURI","Gender":"L"},{"Kosakata_Dasar":"NUSWANTORO","Gender":"L"},{"Kosakata_Dasar":"OCTAVIA","Gender":"P"},{"Kosakata_Dasar":"ODE","Gender":"P"},{"Kosakata_Dasar":"ODIN","Gender":"L"},{"Kosakata_Dasar":"OHONEY","Gender":"P"},{"Kosakata_Dasar":"OJWALA","Gender":"P"},{"Kosakata_Dasar":"OKTA","Gender":"P"},{"Kosakata_Dasar":"OKTAVIA","Gender":"P"},{"Kosakata_Dasar":"OKTAVIAN","Gender":"L"},{"Kosakata_Dasar":"OKTAVIANA","Gender":"P"},{"Kosakata_Dasar":"OKTAVIANI","Gender":"P"},{"Kosakata_Dasar":"ORI","Gender":"L"},{"Kosakata_Dasar":"ORLIN","Gender":"L"},{"Kosakata_Dasar":"OVIYANTI","Gender":"L"},{"Kosakata_Dasar":"OXCELLA","Gender":"P"},{"Kosakata_Dasar":"PAMUNGKAS","Gender":"L"},{"Kosakata_Dasar":"PANDUAHADA","Gender":"P"},{"Kosakata_Dasar":"PAPATH","Gender":"L"},{"Kosakata_Dasar":"PARAMA","Gender":"L"},{"Kosakata_Dasar":"PASSASY","Gender":"P"},{"Kosakata_Dasar":"PHAULANDRY","Gender":"P"},{"Kosakata_Dasar":"PIDANTI","Gender":"L"},{"Kosakata_Dasar":"PRABAWA","Gender":"P"},{"Kosakata_Dasar":"PRADANA","Gender":"P"},{"Kosakata_Dasar":"PRADANTA","Gender":"P"},{"Kosakata_Dasar":"PRADIPTA","Gender":"P"},{"Kosakata_Dasar":"PRADITA","Gender":"P"},{"Kosakata_Dasar":"PRADIVA","Gender":"P"},{"Kosakata_Dasar":"PRAMESTRI","Gender":"L"},{"Kosakata_Dasar":"PRAMUDITA","Gender":"P"},{"Kosakata_Dasar":"PRAMUDYA","Gender":"P"},{"Kosakata_Dasar":"PRANADHIPA","Gender":"P"},{"Kosakata_Dasar":"PRANOLO","Gender":"L"},{"Kosakata_Dasar":"PRASETIANTO","Gender":"L"},{"Kosakata_Dasar":"PRASETYO","Gender":"L"},{"Kosakata_Dasar":"PRASTAWA","Gender":"P"},{"Kosakata_Dasar":"PRASTIWI","Gender":"P"},{"Kosakata_Dasar":"PRASTOWO","Gender":"L"},{"Kosakata_Dasar":"PRATAMA","Gender":"L"},{"Kosakata_Dasar":"PRIAMBADA","Gender":"P"},{"Kosakata_Dasar":"PRIBADI","Gender":"L"},{"Kosakata_Dasar":"PRISWANTO","Gender":"L"},{"Kosakata_Dasar":"PRIYAWAN","Gender":"L"},{"Kosakata_Dasar":"PURAMA","Gender":"L"},{"Kosakata_Dasar":"PURNOMO","Gender":"L"},{"Kosakata_Dasar":"PURWANTO","Gender":"L"},{"Kosakata_Dasar":"PUSPA","Gender":"P"},{"Kosakata_Dasar":"PUSPITA","Gender":"P"},{"Kosakata_Dasar":"PUSPITASARI","Gender":"L"},{"Kosakata_Dasar":"PUTDAM","Gender":"L"},{"Kosakata_Dasar":"PUTERA","Gender":"P"},{"Kosakata_Dasar":"PUTRA","Gender":"L"},{"Kosakata_Dasar":"PUTRAYUKA","Gender":"P"},{"Kosakata_Dasar":"PUTRI","Gender":"P"},{"Kosakata_Dasar":"QAIREEN","Gender":"L"},{"Kosakata_Dasar":"QHOIRILL","Gender":"L"},{"Kosakata_Dasar":"QOIRINA","Gender":"P"},{"Kosakata_Dasar":"QONITAH","Gender":"P"},{"Kosakata_Dasar":"QOTHRUNNADA","Gender":"P"},{"Kosakata_Dasar":"QUENSHA","Gender":"P"},{"Kosakata_Dasar":"QURROTUAINI","Gender":"P"},{"Kosakata_Dasar":"RABBANI","Gender":"P"},{"Kosakata_Dasar":"RACHMADIE","Gender":"P"},{"Kosakata_Dasar":"RADEN","Gender":"L"},{"Kosakata_Dasar":"RADHITYA","Gender":"P"},{"Kosakata_Dasar":"RADITYA","Gender":"L"},{"Kosakata_Dasar":"RAFA","Gender":"P"},{"Kosakata_Dasar":"RAFARDHAN","Gender":"L"},{"Kosakata_Dasar":"RAFFI","Gender":"P"},{"Kosakata_Dasar":"RAFIF","Gender":"L"},{"Kosakata_Dasar":"RAFIFATURIFDA","Gender":"P"},{"Kosakata_Dasar":"RAFINDRA","Gender":"L"},{"Kosakata_Dasar":"RAHARDJO","Gender":"L"},{"Kosakata_Dasar":"RAHAYU","Gender":"L"},{"Kosakata_Dasar":"RAHMA","Gender":"L"},{"Kosakata_Dasar":"RAHMAD","Gender":"L"},{"Kosakata_Dasar":"RAHMAN","Gender":"L"},{"Kosakata_Dasar":"RAHMANI","Gender":"P"},{"Kosakata_Dasar":"RAHMANIA","Gender":"P"},{"Kosakata_Dasar":"RAHMAWATI","Gender":"L"},{"Kosakata_Dasar":"RAIF","Gender":"L"},{"Kosakata_Dasar":"RAIHAN","Gender":"L"},{"Kosakata_Dasar":"RAIHANA","Gender":"P"},{"Kosakata_Dasar":"RAIHANAH","Gender":"P"},{"Kosakata_Dasar":"RAINA","Gender":"P"},{"Kosakata_Dasar":"RAISA","Gender":"P"},{"Kosakata_Dasar":"RAISHA","Gender":"P"},{"Kosakata_Dasar":"RAKA","Gender":"P"},{"Kosakata_Dasar":"RAKHA","Gender":"P"},{"Kosakata_Dasar":"RAMADAN","Gender":"L"},{"Kosakata_Dasar":"RAMADANI","Gender":"P"},{"Kosakata_Dasar":"RAMADANIA","Gender":"P"},{"Kosakata_Dasar":"RAMADHA","Gender":"P"},{"Kosakata_Dasar":"RAMADHAN","Gender":"L"},{"Kosakata_Dasar":"RAMADHANI","Gender":"P"},{"Kosakata_Dasar":"RAMAYANTO","Gender":"L"},{"Kosakata_Dasar":"RANGGA","Gender":"P"},{"Kosakata_Dasar":"RANIA","Gender":"P"},{"Kosakata_Dasar":"RAPHAEL","Gender":"L"},{"Kosakata_Dasar":"RARAS","Gender":"L"},{"Kosakata_Dasar":"RASYID","Gender":"L"},{"Kosakata_Dasar":"RASYIID","Gender":"L"},{"Kosakata_Dasar":"RAZANI","Gender":"P"},{"Kosakata_Dasar":"RAZIN","Gender":"L"},{"Kosakata_Dasar":"RAZITA","Gender":"P"},{"Kosakata_Dasar":"RAZKA","Gender":"P"},{"Kosakata_Dasar":"REGHA","Gender":"P"},{"Kosakata_Dasar":"RENATA","Gender":"P"},{"Kosakata_Dasar":"RENATHA","Gender":"P"},{"Kosakata_Dasar":"REREZKY","Gender":"P"},{"Kosakata_Dasar":"RESTU","Gender":"L"},{"Kosakata_Dasar":"REVANA","Gender":"P"},{"Kosakata_Dasar":"REZA","Gender":"P"},{"Kosakata_Dasar":"REZKY","Gender":"P"},{"Kosakata_Dasar":"RHEA","Gender":"P"},{"Kosakata_Dasar":"RIDWAN","Gender":"L"},{"Kosakata_Dasar":"RIFA","Gender":"P"},{"Kosakata_Dasar":"RINA","Gender":"P"},{"Kosakata_Dasar":"RIO","Gender":"L"},{"Kosakata_Dasar":"RISAINA","Gender":"P"},{"Kosakata_Dasar":"RISKI","Gender":"P"},{"Kosakata_Dasar":"RISMAYLA","Gender":"P"},{"Kosakata_Dasar":"RISNANDA","Gender":"P"},{"Kosakata_Dasar":"RIYANTO","Gender":"L"},{"Kosakata_Dasar":"RIZI","Gender":"P"},{"Kosakata_Dasar":"RIZKI","Gender":"N"},{"Kosakata_Dasar":"RIZKY","Gender":"N"},{"Kosakata_Dasar":"RIZQI","Gender":"P"},{"Kosakata_Dasar":"RIZUN","Gender":"L"},{"Kosakata_Dasar":"RODERICK","Gender":"L"},{"Kosakata_Dasar":"ROHMAH","Gender":"P"},{"Kosakata_Dasar":"ROMMEL","Gender":"L"},{"Kosakata_Dasar":"ROSYID","Gender":"L"},{"Kosakata_Dasar":"ROZZAQ","Gender":"L"},{"Kosakata_Dasar":"SABELLA","Gender":"P"},{"Kosakata_Dasar":"SABILA","Gender":"P"},{"Kosakata_Dasar":"SABIYA","Gender":"P"},{"Kosakata_Dasar":"SABRINA","Gender":"P"},{"Kosakata_Dasar":"SADIRA","Gender":"P"},{"Kosakata_Dasar":"SADIYA","Gender":"P"},{"Kosakata_Dasar":"SADYA","Gender":"P"},{"Kosakata_Dasar":"SAFA","Gender":"P"},{"Kosakata_Dasar":"SAFAHAURA","Gender":"P"},{"Kosakata_Dasar":"SAFFANA","Gender":"P"},{"Kosakata_Dasar":"SAFIA","Gender":"P"},{"Kosakata_Dasar":"SAFIRA","Gender":"P"},{"Kosakata_Dasar":"SAFITRI","Gender":"L"},{"Kosakata_Dasar":"SAHASIKA","Gender":"P"},{"Kosakata_Dasar":"SAHIRUL","Gender":"L"},{"Kosakata_Dasar":"SAHITYA","Gender":"P"},{"Kosakata_Dasar":"SAKHA","Gender":"P"},{"Kosakata_Dasar":"SAKHI","Gender":"P"},{"Kosakata_Dasar":"SAKI","Gender":"P"},{"Kosakata_Dasar":"SAKTI","Gender":"L"},{"Kosakata_Dasar":"SALMA","Gender":"L"},{"Kosakata_Dasar":"SALSABILA","Gender":"P"},{"Kosakata_Dasar":"SALWA","Gender":"P"},{"Kosakata_Dasar":"SAMUDRA","Gender":"L"},{"Kosakata_Dasar":"SAMUEL","Gender":"L"},{"Kosakata_Dasar":"SANDHIKA","Gender":"P"},{"Kosakata_Dasar":"SANDRINA","Gender":"P"},{"Kosakata_Dasar":"SANIA","Gender":"P"},{"Kosakata_Dasar":"SANTIKA","Gender":"P"},{"Kosakata_Dasar":"SAPUTRA","Gender":"P"},{"Kosakata_Dasar":"SAPUTRI","Gender":"L"},{"Kosakata_Dasar":"SAPUTRO","Gender":"L"},{"Kosakata_Dasar":"SARI","Gender":"L"},{"Kosakata_Dasar":"SATRIA","Gender":"P"},{"Kosakata_Dasar":"SATYASA","Gender":"P"},{"Kosakata_Dasar":"SCHOLASTICA","Gender":"P"},{"Kosakata_Dasar":"SCOLASTICA","Gender":"P"},{"Kosakata_Dasar":"SEHSIL","Gender":"L"},{"Kosakata_Dasar":"SEKAR","Gender":"L"},{"Kosakata_Dasar":"SELLO","Gender":"L"},{"Kosakata_Dasar":"SELLYNA","Gender":"P"},{"Kosakata_Dasar":"SENJA","Gender":"P"},{"Kosakata_Dasar":"SENO","Gender":"L"},{"Kosakata_Dasar":"SEPTI","Gender":"L"},{"Kosakata_Dasar":"SEPTIAN","Gender":"L"},{"Kosakata_Dasar":"SEPTIANA","Gender":"P"},{"Kosakata_Dasar":"SEPTIANUGRAHA","Gender":"P"},{"Kosakata_Dasar":"SEPTIKANA","Gender":"P"},{"Kosakata_Dasar":"SEPTYA","Gender":"P"},{"Kosakata_Dasar":"SETIAJI","Gender":"P"},{"Kosakata_Dasar":"SETIONO","Gender":"L"},{"Kosakata_Dasar":"SETO","Gender":"L"},{"Kosakata_Dasar":"SETRI","Gender":"L"},{"Kosakata_Dasar":"SETYAWAN","Gender":"L"},{"Kosakata_Dasar":"SETYAWATI","Gender":"L"},{"Kosakata_Dasar":"SETYO","Gender":"L"},{"Kosakata_Dasar":"SEVILIN","Gender":"L"},{"Kosakata_Dasar":"SHAADIQAAH","Gender":"P"},{"Kosakata_Dasar":"SHAFA","Gender":"P"},{"Kosakata_Dasar":"SHAFAA","Gender":"P"},{"Kosakata_Dasar":"SHAINA","Gender":"P"},{"Kosakata_Dasar":"SHAISTA","Gender":"P"},{"Kosakata_Dasar":"SHALINA","Gender":"P"},{"Kosakata_Dasar":"SHAQEENA","Gender":"P"},{"Kosakata_Dasar":"SHAQUILLA","Gender":"P"},{"Kosakata_Dasar":"SHIDQI","Gender":"P"},{"Kosakata_Dasar":"SHIRA","Gender":"P"},{"Kosakata_Dasar":"SHOLEH","Gender":"L"},{"Kosakata_Dasar":"SIFA","Gender":"P"},{"Kosakata_Dasar":"SIGIT","Gender":"L"},{"Kosakata_Dasar":"SILVIA","Gender":"P"},{"Kosakata_Dasar":"SITI","Gender":"P"},{"Kosakata_Dasar":"SONIA","Gender":"P"},{"Kosakata_Dasar":"SOPHIA","Gender":"P"},{"Kosakata_Dasar":"SOUMANY","Gender":"P"},{"Kosakata_Dasar":"SUBHIYA","Gender":"P"},{"Kosakata_Dasar":"SUHARDI","Gender":"L"},{"Kosakata_Dasar":"SULAIMAN","Gender":"L"},{"Kosakata_Dasar":"SULISTYOJA","Gender":"P"},{"Kosakata_Dasar":"SULTHAN","Gender":"L"},{"Kosakata_Dasar":"SURYA","Gender":"P"},{"Kosakata_Dasar":"SURYANTO","Gender":"L"},{"Kosakata_Dasar":"SUSYANTO","Gender":"L"},{"Kosakata_Dasar":"SYADZA","Gender":"P"},{"Kosakata_Dasar":"SYAFA","Gender":"P"},{"Kosakata_Dasar":"SYAFAQOH","Gender":"L"},{"Kosakata_Dasar":"SYAFARIQ","Gender":"L"},{"Kosakata_Dasar":"SYAGIF","Gender":"L"},{"Kosakata_Dasar":"SYAHNA","Gender":"P"},{"Kosakata_Dasar":"SYAHPUTRA","Gender":"P"},{"Kosakata_Dasar":"SYAIFUL","Gender":"L"},{"Kosakata_Dasar":"SYAKIRA","Gender":"P"},{"Kosakata_Dasar":"SYAPUTRA","Gender":"P"},{"Kosakata_Dasar":"SYARIIFAH","Gender":"P"},{"Kosakata_Dasar":"SYIFA","Gender":"P"},{"Kosakata_Dasar":"TALITA","Gender":"P"},{"Kosakata_Dasar":"TALITHA","Gender":"P"},{"Kosakata_Dasar":"TANIA","Gender":"P"},{"Kosakata_Dasar":"TARA","Gender":"P"},{"Kosakata_Dasar":"TASEEFA","Gender":"P"},{"Kosakata_Dasar":"TASYA","Gender":"L"},{"Kosakata_Dasar":"TATIANA","Gender":"P"},{"Kosakata_Dasar":"TAUWABBINA","Gender":"P"},{"Kosakata_Dasar":"THALITA","Gender":"P"},{"Kosakata_Dasar":"TIARA","Gender":"P"},{"Kosakata_Dasar":"TRI","Gender":"N"},{"Kosakata_Dasar":"TRIHATI","Gender":"L"},{"Kosakata_Dasar":"TRUSTIA","Gender":"P"},{"Kosakata_Dasar":"TSABITA","Gender":"P"},{"Kosakata_Dasar":"TSAGIIFSINA","Gender":"P"},{"Kosakata_Dasar":"TSAMARA","Gender":"P"},{"Kosakata_Dasar":"TSANIA","Gender":"P"},{"Kosakata_Dasar":"TSAQIF","Gender":"L"},{"Kosakata_Dasar":"TSURAYA","Gender":"P"},{"Kosakata_Dasar":"TUNJUNG","Gender":"L"},{"Kosakata_Dasar":"UTAMA","Gender":"L"},{"Kosakata_Dasar":"UTAMI","Gender":"P"},{"Kosakata_Dasar":"VALEKANA","Gender":"P"},{"Kosakata_Dasar":"VALEN","Gender":"L"},{"Kosakata_Dasar":"VALENZIA","Gender":"P"},{"Kosakata_Dasar":"VALERIE","Gender":"P"},{"Kosakata_Dasar":"VALLEN","Gender":"L"},{"Kosakata_Dasar":"VANDOYO","Gender":"L"},{"Kosakata_Dasar":"VANIA","Gender":"P"},{"Kosakata_Dasar":"VANNESYA","Gender":"L"},{"Kosakata_Dasar":"VARISHA","Gender":"P"},{"Kosakata_Dasar":"VENTO","Gender":"L"},{"Kosakata_Dasar":"VERDA","Gender":"P"},{"Kosakata_Dasar":"VIANCA","Gender":"P"},{"Kosakata_Dasar":"VICTORIA","Gender":"P"},{"Kosakata_Dasar":"VIOLA","Gender":"P"},{"Kosakata_Dasar":"VIRENDRA","Gender":"L"},{"Kosakata_Dasar":"WA","Gender":"P"},{"Kosakata_Dasar":"WAFA","Gender":"P"},{"Kosakata_Dasar":"WAHYU","Gender":"L"},{"Kosakata_Dasar":"WAHYUDI","Gender":"L"},{"Kosakata_Dasar":"WAHYUNI","Gender":"P"},{"Kosakata_Dasar":"WARDHA","Gender":"P"},{"Kosakata_Dasar":"WARDHANI","Gender":"P"},{"Kosakata_Dasar":"WHENI","Gender":"P"},{"Kosakata_Dasar":"WHENING","Gender":"P"},{"Kosakata_Dasar":"WIBIYANTO","Gender":"L"},{"Kosakata_Dasar":"WIBOWO","Gender":"L"},{"Kosakata_Dasar":"WICAKSONO","Gender":"L"},{"Kosakata_Dasar":"WIDI","Gender":"L"},{"Kosakata_Dasar":"WIDIA","Gender":"P"},{"Kosakata_Dasar":"WIDIASMORO","Gender":"L"},{"Kosakata_Dasar":"WIDIYA","Gender":"P"},{"Kosakata_Dasar":"WIDYASTUTI","Gender":"L"},{"Kosakata_Dasar":"WIENARJATI","Gender":"L"},{"Kosakata_Dasar":"WIJAYA","Gender":"P"},{"Kosakata_Dasar":"WILDA","Gender":"P"},{"Kosakata_Dasar":"WIROSENO","Gender":"L"},{"Kosakata_Dasar":"WULANDANI","Gender":"P"},{"Kosakata_Dasar":"WULANDARI","Gender":"L"},{"Kosakata_Dasar":"YAHYA","Gender":"P"},{"Kosakata_Dasar":"YASMIN","Gender":"L"},{"Kosakata_Dasar":"YASMINE","Gender":"P"},{"Kosakata_Dasar":"YESLIN","Gender":"L"},{"Kosakata_Dasar":"YIPING","Gender":"L"},{"Kosakata_Dasar":"YODHA","Gender":"P"},{"Kosakata_Dasar":"YUANDANA","Gender":"P"},{"Kosakata_Dasar":"YUDHISTIRA","Gender":"P"},{"Kosakata_Dasar":"YUGI","Gender":"P"},{"Kosakata_Dasar":"YUKINAIMA","Gender":"L"},{"Kosakata_Dasar":"YULIA","Gender":"P"},{"Kosakata_Dasar":"YULIANTO","Gender":"L"},{"Kosakata_Dasar":"YUMNA","Gender":"P"},{"Kosakata_Dasar":"YUNANDA","Gender":"P"},{"Kosakata_Dasar":"YUSAN","Gender":"L"},{"Kosakata_Dasar":"YUSUF","Gender":"L"},{"Kosakata_Dasar":"ZACKY","Gender":"P"},{"Kosakata_Dasar":"ZAENI","Gender":"P"},{"Kosakata_Dasar":"ZAFEERA","Gender":"P"},{"Kosakata_Dasar":"ZAFRAN","Gender":"L"},{"Kosakata_Dasar":"ZAHIRA","Gender":"P"},{"Kosakata_Dasar":"ZAHRA","Gender":"P"},{"Kosakata_Dasar":"ZAHRANA","Gender":"P"},{"Kosakata_Dasar":"ZAHSY","Gender":"P"},{"Kosakata_Dasar":"ZAHWA","Gender":"P"},{"Kosakata_Dasar":"ZAIDAN","Gender":"L"},{"Kosakata_Dasar":"ZAIN","Gender":"L"},{"Kosakata_Dasar":"ZAINUL","Gender":"L"},{"Kosakata_Dasar":"ZAKINA","Gender":"P"},{"Kosakata_Dasar":"ZAKIYAH","Gender":"P"},{"Kosakata_Dasar":"ZALIKA","Gender":"P"},{"Kosakata_Dasar":"ZAM","Gender":"L"},{"Kosakata_Dasar":"ZANA","Gender":"P"},{"Kosakata_Dasar":"ZANDRHEA","Gender":"P"},{"Kosakata_Dasar":"ZEN","Gender":"L"},{"Kosakata_Dasar":"ZENDA","Gender":"P"},{"Kosakata_Dasar":"ZHAFIRA","Gender":"P"},{"Kosakata_Dasar":"ZHAFRAN","Gender":"L"},{"Kosakata_Dasar":"ZHAGUILLA","Gender":"P"},{"Kosakata_Dasar":"ZHAHIRA","Gender":"P"},{"Kosakata_Dasar":"ZHARIIFAH","Gender":"P"},{"Kosakata_Dasar":"ZIDAN","Gender":"L"},{"Kosakata_Dasar":"ZIDNI","Gender":"P"},{"Kosakata_Dasar":"ZIKTA","Gender":"P"},{"Kosakata_Dasar":"ZIQRINA","Gender":"P"},{"Kosakata_Dasar":"ZULFA","Gender":"P"}];
+
+const TLDS = ['.com', '.id', '.co.id', '.net', '.io', '.co'];
+const GENDER_LABELS = { L: 'Laki-laki', P: 'Perempuan', N: 'Netral' };
+
+let selectedGender = 'all';
+let wordCount = 2;
+let generateCount = 10;
+let showWebsite = false;
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function toTitleCase(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+function filterPool(gender) {
+  if (gender === 'all') return DATABASE;
+  if (gender === 'N') return DATABASE.filter(d => d.Gender === 'N');
+  return DATABASE.filter(d => d.Gender === gender || d.Gender === 'N');
+}
+
+function pickWords(n, gender) {
+  const pool = shuffle(filterPool(gender));
+  const chosen = [];
+  const used = new Set();
+  for (const item of pool) {
+    if (chosen.length >= n) break;
+    if (!used.has(item.Kosakata_Dasar)) {
+      chosen.push(item);
+      used.add(item.Kosakata_Dasar);
+    }
+  }
+  while (chosen.length < n && DATABASE.length > 0) {
+    chosen.push(pick(DATABASE));
+  }
+  return chosen;
+}
+
+function dominantGender(parts) {
+  const counts = { L: 0, P: 0, N: 0 };
+  parts.forEach(p => { counts[p.Gender] = (counts[p.Gender] || 0) + 1; });
+  if (counts.N === parts.length) return 'N';
+  if (counts.L > counts.P) return 'L';
+  if (counts.P > counts.L) return 'P';
+  return 'N';
+}
+
+function generateWebsiteIdeas(names) {
+  const ideas = [];
+  const seen = new Set();
+  names.slice(0, 6).forEach(combo => {
+    const slug = combo.words.map(w => w.toLowerCase()).join('');
+    const tld = pick(TLDS);
+    const url = slug + tld;
+    if (!seen.has(url)) { seen.add(url); ideas.push({ url, tld, name: combo.full }); }
+    // Also try first word only
+    if (combo.words.length > 1) {
+      const shortSlug = combo.words[0].toLowerCase();
+      const shortUrl = shortSlug + pick(TLDS);
+      if (!seen.has(shortUrl)) { seen.add(shortUrl); ideas.push({ url: shortUrl, tld: pick(TLDS), name: combo.full }); }
+    }
+  });
+  return ideas.slice(0, 8);
+}
+
+function generate() {
+  const pool = filterPool(selectedGender);
+  if (pool.length < wordCount) {
+    alert('Tidak cukup data untuk filter yang dipilih. Coba pilih gender berbeda.');
+    return;
+  }
+
+  const results = [];
+  const usedCombos = new Set();
+
+  for (let i = 0; i < generateCount * 3 && results.length < generateCount; i++) {
+    const parts = pickWords(wordCount, selectedGender);
+    const fullName = parts.map(p => toTitleCase(p.Kosakata_Dasar)).join(' ');
+    if (!usedCombos.has(fullName)) {
+      usedCombos.add(fullName);
+      results.push({
+        full: fullName,
+        words: parts.map(p => toTitleCase(p.Kosakata_Dasar)),
+        parts: parts,
+        gender: dominantGender(parts)
+      });
+    }
+  }
+
+  renderResults(results);
+  if (showWebsite) renderWebsite(generateWebsiteIdeas(results));
+
+  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function renderResults(results) {
+  const grid = document.getElementById('results-grid');
+  const countEl = document.getElementById('results-count');
+  countEl.textContent = results.length + ' nama ditemukan';
+
+  grid.innerHTML = results.map((r, i) => {
+    const delay = (i * 0.04).toFixed(2);
+    const partsHtml = r.words.map(w => `<span class="name-part">${w}</span>`).join('');
+    return `<div class="name-card" style="animation-delay:${delay}s" onclick="copyName(this,'${r.full}')">
+      <div class="name-text">${r.full}</div>
+      <div class="name-parts">${partsHtml}</div>
+      <div class="name-meta">
+        <span class="gender-badge gender-${r.gender}">${GENDER_LABELS[r.gender]}</span>
+        <span class="copy-hint">klik untuk salin</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderWebsite(ideas) {
+  const list = document.getElementById('website-list');
+  const ws = document.getElementById('website-section');
+  ws.style.display = showWebsite ? 'block' : 'none';
+  if (!showWebsite) return;
+
+  list.innerHTML = ideas.map(idea => `
+    <div class="website-item" onclick="copyName(this,'${idea.url}')">
+      <div class="website-url">${idea.url}</div>
+      <span class="website-ext">${idea.tld}</span>
+    </div>
+  `).join('');
+}
+
+function copyName(el, text) {
+  navigator.clipboard.writeText(text).catch(() => {});
+  el.classList.add('copied');
+  setTimeout(() => el.classList.remove('copied'), 1400);
+}
+
+// Slider
+const sliderEl = document.getElementById('word-count');
+const sliderValEl = document.getElementById('slider-val');
+const wordCountDisplay = document.getElementById('word-count-display');
+
+sliderEl.addEventListener('input', () => {
+  wordCount = parseInt(sliderEl.value);
+  sliderValEl.textContent = wordCount;
+  wordCountDisplay.textContent = wordCount;
+});
+
+// Count buttons
+document.querySelectorAll('.count-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    generateCount = parseInt(btn.dataset.count);
+  });
+});
+
+// Gender pills
+document.querySelectorAll('.pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    selectedGender = pill.dataset.gender;
+  });
+});
+
+// Website toggle
+const toggleSwitch = document.getElementById('toggle-switch');
+document.getElementById('website-toggle').addEventListener('click', () => {
+  showWebsite = !showWebsite;
+  toggleSwitch.classList.toggle('on', showWebsite);
+  const ws = document.getElementById('website-section');
+  if (!showWebsite) ws.style.display = 'none';
+});
+
+// Generate button
+document.getElementById('generate-btn').addEventListener('click', generate);
+
+// Generate on load
+generate();
+</script>
+</body>
+</html>
